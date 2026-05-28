@@ -1,0 +1,173 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model TodoUser {
+  id           String               @id @default(cuid())
+  phone        String               @unique @db.VarChar(20)
+  password     String
+  name         String?              @db.VarChar(100)
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  todos        TodoTodo[]
+  categories   TodoCategory[]
+  tags         TodoTag[]
+  reminders    TodoReminder[]
+  notifications TodoNotification[]
+  subscriptions TodoPushSubscription[]
+  histories    TodoHistory[]
+
+  @@map("todo_users")
+}
+
+model TodoCategory {
+  id         String     @id @default(cuid())
+  userId     String
+  name       String     @db.VarChar(80)
+  color      String?    @db.VarChar(20)
+  sortOrder  Int        @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  user       TodoUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  todos      TodoTodo[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("todo_categories")
+}
+
+model TodoTodo {
+  id           BigInt            @id @default(autoincrement())
+  userId       String
+  categoryId   String?
+  title        String            @db.VarChar(200)
+  content      String?           @db.Text
+  status       String            @default("todo") @db.VarChar(20)
+  priority     Int               @default(2)
+  dueDate      DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  deletedAt    DateTime?
+  user         TodoUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category     TodoCategory?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags         TodoTodoTag[]
+  histories    TodoHistory[]
+  reminders    TodoReminder[]
+  notifications TodoNotification[]
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("todo_todos")
+}
+
+model TodoTag {
+  id         String        @id @default(cuid())
+  userId     String
+  name       String        @db.VarChar(50)
+  color      String?       @db.VarChar(20)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  user       TodoUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  todoTags   TodoTodoTag[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("todo_tags")
+}
+
+model TodoTodoTag {
+  id         String    @id @default(cuid())
+  todoId     BigInt
+  tagId      String
+  createdAt  DateTime  @default(now())
+  todo       TodoTodo  @relation(fields: [todoId], references: [id], onDelete: Cascade)
+  tag        TodoTag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([todoId, tagId])
+  @@index([todoId])
+  @@index([tagId])
+  @@map("todo_todo_tags")
+}
+
+model TodoHistory {
+  id           String   @id @default(cuid())
+  todoId       BigInt
+  userId       String
+  action       String   @db.VarChar(50)
+  beforeValue  Json?
+  afterValue   Json?
+  createdAt    DateTime @default(now())
+  todo         TodoTodo @relation(fields: [todoId], references: [id], onDelete: Cascade)
+  user         TodoUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([todoId])
+  @@index([userId])
+  @@map("todo_history")
+}
+
+model TodoReminder {
+  id                    String   @id @default(cuid())
+  todoId                BigInt
+  userId                String
+  remindAt              DateTime
+  repeatIntervalMinutes  Int      @default(5)
+  lastNotifiedAt         DateTime?
+  dismissedAt           DateTime?
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  todo                  TodoTodo @relation(fields: [todoId], references: [id], onDelete: Cascade)
+  user                  TodoUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([todoId])
+  @@index([userId])
+  @@index([remindAt])
+  @@map("todo_reminders")
+}
+
+model TodoNotification {
+  id         String    @id @default(cuid())
+  userId     String
+  todoId     BigInt?
+  title      String    @db.VarChar(200)
+  body       String    @db.VarChar(500)
+  kind       String    @default("reminder") @db.VarChar(30)
+  isRead     Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  readAt     DateTime?
+  user       TodoUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  todo       TodoTodo? @relation(fields: [todoId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([todoId])
+  @@index([isRead])
+  @@map("todo_notifications")
+}
+
+model TodoPushSubscription {
+  id         String   @id @default(cuid())
+  userId     String
+  endpoint   String   @unique
+  deviceName String?  @db.VarChar(120)
+  p256dh     String
+  auth       String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       TodoUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("todo_push_subscriptions")
+}
