@@ -18,7 +18,6 @@ import {
   todoPriorityLabels,
   todoPriorityTones,
   todoStatusLabels,
-  todoStatusTones,
 } from "@/lib/todo";
 
 type Category = {
@@ -475,18 +474,24 @@ export function TodoDashboard({
               return (
                 <article
                   key={todo.id}
-                  className={`rounded-[28px] border p-4 transition ${
+                  className={`relative overflow-hidden rounded-[28px] border p-4 shadow-[0_16px_34px_rgba(21,18,20,0.10),0_1px_0_rgba(255,255,255,0.62)_inset] transition dark:shadow-[0_18px_46px_rgba(0,0,0,0.42),0_1px_0_rgba(255,255,255,0.06)_inset] ${
                     isDone
-                      ? "border-[color-mix(in_srgb,var(--success)_22%,var(--border))] bg-[color-mix(in_srgb,var(--surface-soft)_72%,var(--surface))] opacity-70"
-                      : "border-[var(--border)] bg-[var(--surface)] hover:-translate-y-0.5 hover:shadow-[0_12px_35px_rgba(0,0,0,0.08)]"
+                      ? "border-[color-mix(in_srgb,var(--success)_26%,var(--border))] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--surface-soft)_86%,white),color-mix(in_srgb,var(--surface)_74%,var(--success)))] opacity-75 dark:bg-[linear-gradient(135deg,color-mix(in_srgb,var(--surface-soft)_84%,black),color-mix(in_srgb,var(--surface)_78%,var(--success)))]"
+                      : "border-[color-mix(in_srgb,var(--border)_74%,white)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--surface)_96%,white),color-mix(in_srgb,var(--surface-soft)_68%,white))] hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(21,18,20,0.14),0_1px_0_rgba(255,255,255,0.72)_inset] dark:border-[color-mix(in_srgb,var(--border)_68%,white)] dark:bg-[linear-gradient(135deg,color-mix(in_srgb,var(--surface)_90%,white),color-mix(in_srgb,var(--surface-soft)_86%,black))] dark:hover:shadow-[0_24px_56px_rgba(0,0,0,0.52),0_1px_0_rgba(255,255,255,0.08)_inset]"
                   }`}
                 >
+                  <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-white/70 dark:bg-white/10" />
                   <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge tone={todoStatusTones[todo.status] || "neutral"}>{todoStatusLabels[todo.status] || todo.status}</Badge>
                         <Badge tone={todoPriorityTones[todo.priority] || "neutral"}>{todoPriorityLabels[todo.priority] || todo.priority}</Badge>
                         {todo.category && <CategoryBadge category={todo.category} />}
+                        {todo.tags.map((relation) => (
+                          <Badge key={relation.id} tone="neutral">
+                            <Tag className="mr-1 h-3 w-3" />
+                            {relation.tag.name}
+                          </Badge>
+                        ))}
                       </div>
                       <h3
                         className={`mt-3 whitespace-pre-line text-lg font-black tracking-tight ${
@@ -500,14 +505,6 @@ export function TodoDashboard({
                           {todo.content}
                         </p>
                       )}
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {todo.tags.map((relation) => (
-                          <Badge key={relation.id} tone="neutral">
-                            <Tag className="mr-1 h-3 w-3" />
-                            {relation.tag.name}
-                          </Badge>
-                        ))}
-                      </div>
                       <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[var(--muted)]">
                         {latestReminder && (
                           <span className="inline-flex items-center gap-1">
