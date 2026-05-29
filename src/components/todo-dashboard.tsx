@@ -435,10 +435,15 @@ export function TodoDashboard({
           <div className="mt-6 grid gap-3">
             {filteredTodos.map((todo) => {
               const latestReminder = todo.reminders.find((reminder) => reminder.isActive && !reminder.dismissedAt);
+              const isDone = todo.status === "done";
               return (
                 <article
                   key={todo.id}
-                  className="rounded-[28px] border border-[var(--border)] bg-[var(--surface)] p-4 transition hover:-translate-y-0.5 hover:shadow-[0_12px_35px_rgba(0,0,0,0.08)]"
+                  className={`rounded-[28px] border p-4 transition ${
+                    isDone
+                      ? "border-[color-mix(in_srgb,var(--success)_22%,var(--border))] bg-[color-mix(in_srgb,var(--surface-soft)_72%,var(--surface))] opacity-70"
+                      : "border-[var(--border)] bg-[var(--surface)] hover:-translate-y-0.5 hover:shadow-[0_12px_35px_rgba(0,0,0,0.08)]"
+                  }`}
                 >
                   <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                     <div className="min-w-0 flex-1">
@@ -447,8 +452,18 @@ export function TodoDashboard({
                         <Badge tone={todoPriorityTones[todo.priority] || "neutral"}>{todoPriorityLabels[todo.priority] || todo.priority}</Badge>
                         {todo.category && <Badge tone="accent">{todo.category.name}</Badge>}
                       </div>
-                      <h3 className="mt-3 text-lg font-black tracking-tight">{todo.title}</h3>
-                      {todo.content && <p className="mt-2 line-clamp-2 text-sm text-[var(--muted)]">{todo.content}</p>}
+                      <h3
+                        className={`mt-3 whitespace-pre-line text-lg font-black tracking-tight ${
+                          isDone ? "text-[var(--muted)] line-through decoration-[var(--success)] decoration-2 underline-offset-4" : ""
+                        }`}
+                      >
+                        {todo.title}
+                      </h3>
+                      {todo.content && (
+                        <p className={`mt-2 line-clamp-2 text-sm text-[var(--muted)] ${isDone ? "line-through decoration-[var(--success)]" : ""}`}>
+                          {todo.content}
+                        </p>
+                      )}
                       <div className="mt-3 flex flex-wrap gap-2">
                         {todo.tags.map((relation) => (
                           <Badge key={relation.id} tone="neutral">
