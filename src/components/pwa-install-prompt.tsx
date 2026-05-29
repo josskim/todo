@@ -28,6 +28,8 @@ export function PwaInstallPrompt() {
   useEffect(() => {
     if (isStandalone() || !isMobile() || window.localStorage.getItem("todo-install-dismissed") === "1") return;
 
+    const isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => undefined);
     }
@@ -35,20 +37,29 @@ export function PwaInstallPrompt() {
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
+      setShowIosGuide(false);
       setVisible(true);
     };
 
+    const handleAppInstalled = () => {
+      window.localStorage.setItem("todo-install-dismissed", "1");
+      setInstallPrompt(null);
+      setVisible(false);
+    };
+
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
 
     const timer = window.setTimeout(() => {
-      if (!isStandalone()) {
+      if (isIos && !isStandalone()) {
         setVisible(true);
-        setShowIosGuide(/iphone|ipad|ipod/i.test(window.navigator.userAgent));
+        setShowIosGuide(true);
       }
     }, 1500);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
       window.clearTimeout(timer);
     };
   }, []);
