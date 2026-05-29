@@ -516,23 +516,23 @@ export function TodoDashboard({
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 xl:justify-end">
-                      <Button variant="secondary" className="h-10 px-3" onClick={() => openEdit(todo)}>
-                        <PencilLine className="h-4 w-4" />
+                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 xl:max-w-[190px]">
+                      <Button variant="secondary" className="h-8 rounded-full px-2.5 text-xs text-[var(--muted)]" onClick={() => openEdit(todo)}>
+                        <PencilLine className="h-3.5 w-3.5" />
                         수정
                       </Button>
                       {todo.status !== "done" ? (
-                        <Button className="h-10 px-3" onClick={() => handleQuickStatus(todo, "done")}>
-                          <CheckCircle2 className="h-4 w-4" />
+                        <Button variant="secondary" className="h-8 rounded-full px-2.5 text-xs text-[var(--muted)]" onClick={() => handleQuickStatus(todo, "done")}>
+                          <CheckCircle2 className="h-3.5 w-3.5" />
                           완료
                         </Button>
                       ) : (
-                        <Button variant="secondary" className="h-10 px-3" onClick={() => handleQuickStatus(todo, "todo")}>
+                        <Button variant="secondary" className="h-8 rounded-full px-2.5 text-xs text-[var(--muted)]" onClick={() => handleQuickStatus(todo, "todo")}>
                           되돌리기
                         </Button>
                       )}
-                      <Button variant="danger" className="h-10 px-3" onClick={() => handleDelete(todo)}>
-                        <Trash2 className="h-4 w-4" />
+                      <Button variant="secondary" className="h-8 rounded-full px-2.5 text-xs text-[var(--muted)]" onClick={() => handleDelete(todo)}>
+                        <Trash2 className="h-3.5 w-3.5" />
                         삭제
                       </Button>
                     </div>
