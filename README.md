@@ -38,6 +38,16 @@ VAPID_SUBJECT=
 TODO_CRON_SECRET=
 ```
 
+Railway 배포 시에는 Railway 프로젝트의 `Variables`에 같은 값을 등록합니다.
+
+- `DATABASE_URL`: 기존 Neon PostgreSQL 연결 문자열
+- `SESSION_SECRET`: 로그인 세션 암호화용 비밀값
+- `NEXT_PUBLIC_APP_URL`: Railway에서 발급된 실제 서비스 주소
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY`: 브라우저 푸시 공개키
+- `VAPID_PRIVATE_KEY`: 브라우저 푸시 개인키
+- `VAPID_SUBJECT`: 푸시 발신자 정보, 예: `mailto:admin@example.com`
+- `TODO_CRON_SECRET`: 리마인더 스윕 API 보호용 비밀값
+
 ## DB 구조
 
 이 앱은 아래 `todo_` 테이블만 사용합니다.
@@ -67,3 +77,14 @@ TODO_CRON_SECRET=
 - 빌드 명령은 `prisma generate && next build`입니다.
 - 현재 프로젝트는 로컬 개발과 내부 테스트용으로 먼저 운영하고, 배포는 이후에 진행합니다.
 
+## Railway 배포
+
+Railway에서 GitHub 저장소 `josskim/todo`를 연결한 뒤 배포합니다.
+
+배포 설정은 [`railway.json`](./railway.json)에 있습니다.
+
+- Build command: `npm run build`
+- Start command: `npm run start`
+- Node.js: `20` 이상
+
+배포 후 Railway가 발급한 도메인을 `NEXT_PUBLIC_APP_URL`에 넣고 재배포해야 브라우저 푸시와 앱 URL이 운영 주소 기준으로 동작합니다.
