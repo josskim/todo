@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Plus, Tag, Trash2, PencilLine, BellRing } from "lucide-react";
+import { CheckCircle2, Plus, Tag, Trash2, PencilLine, BellRing, Search, SlidersHorizontal } from "lucide-react";
 import { Badge, Button, Input, Modal, Select, Textarea } from "@/components/ui";
 import {
   createTodoAction,
@@ -272,6 +272,7 @@ export function TodoDashboard({
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created_desc");
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const filteredTodos = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -302,13 +303,15 @@ export function TodoDashboard({
       });
   }, [todos, search, statusFilter, categoryFilter, priorityFilter, sortBy]);
 
-  const stats = useMemo(() => {
-    return {
-      total: todos.length,
-      done: todos.filter((todo) => todo.status === "done").length,
-      unread: notifications.filter((notification) => !notification.isRead).length,
-    };
-  }, [todos, notifications]);
+  const activeFilterCount = [search.trim(), statusFilter !== "all", categoryFilter !== "all", priorityFilter !== "all", sortBy !== "created_desc"].filter(Boolean).length;
+
+  const resetFilters = () => {
+    setSearch("");
+    setStatusFilter("all");
+    setCategoryFilter("all");
+    setPriorityFilter("all");
+    setSortBy("created_desc");
+  };
 
   const openCreate = () => {
     setEditingTodo(null);
@@ -389,48 +392,73 @@ export function TodoDashboard({
             </Button>
           </div>
 
-          <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <StatPill label="전체" value={stats.total} tone="neutral" />
-            <StatPill label="완료" value={stats.done} tone="success" />
-            <StatPill label="미읽음" value={stats.unread} tone="accent" />
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={() => setFilterOpen((current) => !current)}
+              className="inline-flex h-11 items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] px-4 text-sm font-bold text-[var(--foreground)] transition hover:border-[var(--accent)]"
+            >
+              <Search className="h-4 w-4" />
+              검색/필터
+              {activeFilterCount > 0 && (
+                <span className="rounded-full bg-[var(--accent)] px-2 py-0.5 text-[11px] font-black text-white">{activeFilterCount}</span>
+              )}
+              <SlidersHorizontal className="h-4 w-4 text-[var(--muted)]" />
+            </button>
           </div>
 
-          <div className="mt-6 grid gap-3 lg:grid-cols-4">
-            <div className="lg:col-span-2">
-              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="할일, 비고, 태그 검색" />
+          {filterOpen && (
+            <div className="mt-4 rounded-[26px] border border-[var(--border)] bg-[var(--surface-soft)] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-black">검색과 정렬</h2>
+                  <p className="mt-1 text-xs text-[var(--muted)]">필요할 때만 열어서 목록을 좁혀보세요.</p>
+                </div>
+                {activeFilterCount > 0 && (
+                  <Button type="button" variant="ghost" className="h-9 px-3" onClick={resetFilters}>
+                    초기화
+                  </Button>
+                )}
+              </div>
+
+              <div className="mt-4 grid gap-3 lg:grid-cols-4">
+                <div className="lg:col-span-2">
+                  <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="할일, 비고, 태그 검색" />
+                </div>
+                <Select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                  <option value="all">상태 전체</option>
+                  {Object.entries(todoStatusLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </Select>
+                <Select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                  <option value="created_desc">최신순</option>
+                  <option value="created_asc">오래된순</option>
+                  <option value="priority_desc">우선순위 높은순</option>
+                  <option value="priority_asc">우선순위 낮은순</option>
+                </Select>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="max-w-[220px]">
+                  <option value="all">카테고리 전체</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </Select>
+                <Select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)} className="max-w-[180px]">
+                  <option value="all">우선순위 전체</option>
+                  <option value="1">높음</option>
+                  <option value="2">보통</option>
+                  <option value="3">낮음</option>
+                </Select>
+              </div>
             </div>
-            <Select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              <option value="all">상태 전체</option>
-              {Object.entries(todoStatusLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-            <Select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
-              <option value="created_desc">최신순</option>
-              <option value="created_asc">오래된순</option>
-              <option value="priority_desc">우선순위 높은순</option>
-              <option value="priority_asc">우선순위 낮은순</option>
-            </Select>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-3">
-            <Select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="max-w-[220px]">
-              <option value="all">카테고리 전체</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </Select>
-            <Select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)} className="max-w-[180px]">
-              <option value="all">우선순위 전체</option>
-              <option value="1">높음</option>
-              <option value="2">보통</option>
-              <option value="3">낮음</option>
-            </Select>
-          </div>
+          )}
 
           <div className="mt-6 grid gap-3">
             {filteredTodos.map((todo) => {
@@ -579,26 +607,6 @@ export function TodoDashboard({
           </Panel>
         </aside>
       </section>
-    </div>
-  );
-}
-
-function StatPill({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone: "neutral" | "accent" | "success" | "warning";
-}) {
-  return (
-    <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-soft)] p-4">
-      <div className="text-xs font-bold uppercase tracking-[0.25em] text-[var(--muted)]">{label}</div>
-      <div className="mt-2 flex items-end gap-2">
-        <div className="text-3xl font-black tracking-tight">{value}</div>
-        <Badge tone={tone}>LIVE</Badge>
-      </div>
     </div>
   );
 }
