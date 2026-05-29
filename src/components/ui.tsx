@@ -6,10 +6,19 @@ import { cn } from "@/lib/utils";
 export function Button({
   className,
   variant = "primary",
+  loading = false,
+  disabled,
+  children,
+  onClick,
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+}: Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onClick"> & {
   variant?: "primary" | "secondary" | "ghost" | "danger";
+  loading?: boolean;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
 }) {
+  const [internalLoading, setInternalLoading] = React.useState(false);
+  const isLoading = loading || internalLoading;
+  const isDisabled = disabled || isLoading;
   const variants = {
     primary: "bg-[var(--accent)] text-white hover:opacity-95",
     secondary: "bg-[var(--surface-soft)] text-[var(--foreground)] hover:bg-[color-mix(in_srgb,var(--surface-soft)_78%,white)]",
@@ -17,15 +26,30 @@ export function Button({
     danger: "bg-[var(--danger)] text-white hover:opacity-95",
   };
 
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (!onClick || isDisabled) return;
+
+    const result = onClick(event);
+    if (result && typeof (result as Promise<void>).then === "function") {
+      setInternalLoading(true);
+      (result as Promise<void>).finally(() => setInternalLoading(false));
+    }
+  };
+
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--ring)] disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold transition-colors active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[var(--ring)] disabled:cursor-not-allowed disabled:opacity-50",
         variants[variant],
         className,
       )}
+      disabled={isDisabled}
+      onClick={handleClick}
       {...props}
-    />
+    >
+      {isLoading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />}
+      {children}
+    </button>
   );
 }
 
@@ -124,4 +148,3 @@ export function Modal({
     </div>
   );
 }
-

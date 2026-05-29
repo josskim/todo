@@ -87,7 +87,7 @@ function CategoryForm() {
 
       {state.message && <p className="text-sm font-semibold text-[var(--success)]">{state.message}</p>}
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={pending} loading={pending}>
         {pending ? "저장 중..." : "카테고리 저장"}
       </Button>
     </form>
@@ -118,7 +118,7 @@ function TagForm() {
 
       {state.message && <p className="text-sm font-semibold text-[var(--success)]">{state.message}</p>}
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={pending} loading={pending}>
         {pending ? "저장 중..." : "태그 저장"}
       </Button>
     </form>
@@ -309,11 +309,11 @@ function PushPanel() {
       <div className="rounded-2xl bg-[var(--surface-soft)] p-4 text-sm text-[var(--muted)]">{status}</div>
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={handleEnablePush} disabled={busy}>
+        <Button type="button" onClick={handleEnablePush} disabled={busy} loading={busy}>
           <BellRing className="h-4 w-4" />
           {busy ? "설정 중..." : "브라우저 푸시 켜기"}
         </Button>
-        <Button type="button" variant="secondary" onClick={handleResetPush} disabled={resetBusy}>
+        <Button type="button" variant="secondary" onClick={handleResetPush} disabled={resetBusy} loading={resetBusy}>
           <Trash2 className="h-4 w-4" />
           {resetBusy ? "초기화 중..." : "구독 초기화"}
         </Button>

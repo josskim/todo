@@ -63,7 +63,7 @@ export function LoginForm({
         <Input name="password" type="password" placeholder="비밀번호" />
       </div>
       <ErrorList errors={state.errors} />
-      <Button type="submit" className="w-full" disabled={pending}>
+      <Button type="submit" className="w-full" disabled={pending} loading={pending}>
         {pending ? "로그인 중..." : "로그인"}
       </Button>
       <div className="text-center text-sm text-[var(--muted)]">
@@ -98,7 +98,7 @@ export function SignupForm({
         <Input name="password" type="password" placeholder="4자 이상" />
       </div>
       <ErrorList errors={state.errors} />
-      <Button type="submit" className="w-full" disabled={pending}>
+      <Button type="submit" className="w-full" disabled={pending} loading={pending}>
         {pending ? "가입 중..." : "즉시 가입"}
       </Button>
       <div className="text-center text-sm text-[var(--muted)]">

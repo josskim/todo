@@ -217,7 +217,7 @@ function TodoFormModal({
           <Button type="button" variant="secondary" onClick={onClose}>
             취소
           </Button>
-          <Button type="submit" disabled={pending}>
+          <Button type="submit" disabled={pending} loading={pending}>
             {pending ? "저장 중..." : mode === "create" ? "추가" : "수정"}
           </Button>
         </div>

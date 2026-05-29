@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarCheck2, ListTodo, Settings2, BarChart3, LogOut, Sparkles } from "lucide-react";
+import { CalendarCheck2, ListTodo, Settings2, BarChart3, LogOut, Sparkles, LoaderCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui";
 import { logoutAction } from "@/app/actions/auth";
@@ -24,6 +25,7 @@ export function AppShell({
   userName?: string | null;
 }) {
   const pathname = usePathname();
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen text-[var(--foreground)]">
@@ -52,18 +54,22 @@ export function AppShell({
           <nav className="mt-6 flex flex-1 flex-col gap-2">
             {navItems.map((item) => {
               const active = pathname?.startsWith(item.href);
+              const pending = pendingHref === item.href && !active;
               const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={() => {
+                    if (!active) setPendingHref(item.href);
+                  }}
                   className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                     active
                       ? "bg-[var(--accent)] text-white shadow-lg shadow-[rgba(219,84,97,0.22)]"
                       : "text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5"
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
                   {item.label}
                 </Link>
               );
@@ -116,16 +122,20 @@ export function AppShell({
       <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-3 gap-2 rounded-[24px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-2 shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur lg:hidden">
         {navItems.map((item) => {
           const active = pathname?.startsWith(item.href);
+          const pending = pendingHref === item.href && !active;
           const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => {
+                if (!active) setPendingHref(item.href);
+              }}
               className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-xs font-black transition ${
                 active ? "bg-[var(--accent)] text-white shadow-lg shadow-[rgba(219,84,97,0.22)]" : "text-[var(--muted)] hover:bg-black/5 dark:hover:bg-white/5"
               }`}
             >
-              <Icon className="h-4 w-4" />
+              {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
               {item.label}
             </Link>
           );
