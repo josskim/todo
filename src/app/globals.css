@@ -53,10 +53,28 @@
 
 html {
   min-height: 100%;
+  color-scheme: light;
   background:
     radial-gradient(circle at top left, rgba(219, 84, 97, 0.14), transparent 24%),
     radial-gradient(circle at top right, rgba(52, 66, 108, 0.10), transparent 18%),
     linear-gradient(180deg, var(--background), var(--background));
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 0.78;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.9;
 }
 
 body {
@@ -86,4 +104,3 @@ a {
     0 18px 50px rgba(21, 18, 20, 0.08),
     0 2px 6px rgba(21, 18, 20, 0.05);
 }
-
