@@ -128,14 +128,11 @@ function TodoFormModal({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
             <label className="text-sm font-semibold">할일</label>
-            <Input name="title" defaultValue={todo?.title || ""} placeholder="해야 할 일을 입력하세요" />
+            <Textarea name="title" defaultValue={todo?.title || ""} rows={3} placeholder="해야 할 일을 입력하세요" />
             {state.errors?.title && <p className="text-xs text-[var(--danger)]">{state.errors.title[0]}</p>}
           </div>
 
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-semibold">비고</label>
-            <Textarea name="content" defaultValue={todo?.content || ""} rows={3} placeholder="필요할 때만 간단히 적어두세요." />
-          </div>
+          <input type="hidden" name="content" value={todo?.content || ""} />
 
           <div className="space-y-2">
             <label className="text-sm font-semibold">상태</label>
