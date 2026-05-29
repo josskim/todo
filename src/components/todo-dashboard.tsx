@@ -250,6 +250,22 @@ function ReminderCard({
   );
 }
 
+function CategoryBadge({ category }: { category: Category }) {
+  const color = category.color || "#db5461";
+
+  return (
+    <span
+      className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-bold tracking-wide text-white shadow-sm"
+      style={{
+        backgroundColor: color,
+        borderColor: color,
+      }}
+    >
+      {category.name}
+    </span>
+  );
+}
+
 export function TodoDashboard({
   todos,
   categories,
@@ -470,7 +486,7 @@ export function TodoDashboard({
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge tone={todoStatusTones[todo.status] || "neutral"}>{todoStatusLabels[todo.status] || todo.status}</Badge>
                         <Badge tone={todoPriorityTones[todo.priority] || "neutral"}>{todoPriorityLabels[todo.priority] || todo.priority}</Badge>
-                        {todo.category && <Badge tone="accent">{todo.category.name}</Badge>}
+                        {todo.category && <CategoryBadge category={todo.category} />}
                       </div>
                       <h3
                         className={`mt-3 whitespace-pre-line text-lg font-black tracking-tight ${
@@ -579,9 +595,7 @@ export function TodoDashboard({
           <Panel title="카테고리">
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
-                <Badge key={category.id} tone="accent">
-                  {category.name}
-                </Badge>
+                <CategoryBadge key={category.id} category={category} />
               ))}
               {categories.length === 0 && <EmptyState text="카테고리가 없습니다." />}
             </div>
