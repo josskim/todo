@@ -28,7 +28,7 @@ export function AppShell({
   return (
     <div className="min-h-screen text-[var(--foreground)]">
       <ReminderHeartbeat />
-      <div className="mx-auto flex min-h-screen w-full max-w-[1600px] gap-4 p-4 md:p-6">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1600px] gap-4 p-4 pb-24 md:p-6 lg:pb-6">
         <aside className="hidden w-[280px] flex-col rounded-[32px] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.07)] lg:flex">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent-weak)] text-[var(--accent)]">
@@ -112,6 +112,25 @@ export function AppShell({
           <div className="pb-6">{children}</div>
         </main>
       </div>
+
+      <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-3 gap-2 rounded-[24px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-2 shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur lg:hidden">
+        {navItems.map((item) => {
+          const active = pathname?.startsWith(item.href);
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-xs font-black transition ${
+                active ? "bg-[var(--accent)] text-white shadow-lg shadow-[rgba(219,84,97,0.22)]" : "text-[var(--muted)] hover:bg-black/5 dark:hover:bg-white/5"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

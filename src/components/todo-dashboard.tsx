@@ -374,25 +374,17 @@ export function TodoDashboard({
         />
       )}
 
+      <Button
+        onClick={openCreate}
+        className="fixed bottom-24 right-5 z-40 h-14 rounded-full px-5 shadow-[0_18px_45px_rgba(219,84,97,0.35)] lg:bottom-8 lg:right-8"
+      >
+        <Plus className="h-5 w-5" />
+        할 일 추가
+      </Button>
+
       <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
         <div className="rounded-[32px] border border-[var(--border)] bg-[var(--surface)] p-5 soft-shadow">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className="inline-flex rounded-full bg-[var(--accent-weak)] px-3 py-1 text-[11px] font-bold tracking-[0.28em] text-[var(--accent)]">
-                TODAY&apos;S TODO
-              </div>
-              <h1 className="mt-3 text-3xl font-black tracking-tight">할 일 목록</h1>
-              <p className="mt-2 text-sm text-[var(--muted)]">
-                검색, 필터, 정렬로 빠르게 전환하며 관리하세요.
-              </p>
-            </div>
-            <Button onClick={openCreate} className="h-12 px-5">
-              <Plus className="h-4 w-4" />
-              할 일 추가
-            </Button>
-          </div>
-
-          <div className="mt-6">
+          <div>
             <button
               type="button"
               onClick={() => setFilterOpen((current) => !current)}
