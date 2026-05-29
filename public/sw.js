@@ -3,8 +3,8 @@ self.addEventListener("push", (event) => {
   const title = data.title || "Todo 알림";
   const options = {
     body: data.body || "새 알림이 도착했습니다.",
-    icon: "/icon.png",
-    badge: "/icon.png",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
     data: {
       url: data.url || "/todos",
     },

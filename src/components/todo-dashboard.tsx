@@ -124,6 +124,7 @@ function TodoFormModal({
       <form action={formAction} className="space-y-4">
         {mode === "edit" && <input type="hidden" name="todoId" value={todo?.id || ""} />}
         <input type="hidden" name="tagIds" value={JSON.stringify(selectedTagIds)} />
+        <input type="hidden" name="dueDate" value="" />
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
