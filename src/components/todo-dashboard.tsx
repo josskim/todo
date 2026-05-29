@@ -266,6 +266,7 @@ export function TodoDashboard({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
+  const [modalKey, setModalKey] = useState(0);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -311,11 +312,13 @@ export function TodoDashboard({
 
   const openCreate = () => {
     setEditingTodo(null);
+    setModalKey((current) => current + 1);
     setOpen(true);
   };
 
   const openEdit = (todo: TodoItem) => {
     setEditingTodo(todo);
+    setModalKey((current) => current + 1);
     setOpen(true);
   };
 
@@ -356,15 +359,17 @@ export function TodoDashboard({
 
   return (
     <div className="space-y-6">
-      <TodoFormModal
-        key={editingTodo?.id || "create"}
-        open={open}
-        mode={editingTodo ? "edit" : "create"}
-        todo={editingTodo}
-        categories={categories}
-        tags={tags}
-        onClose={closeModal}
-      />
+      {open && (
+        <TodoFormModal
+          key={`${editingTodo?.id || "create"}-${modalKey}`}
+          open={open}
+          mode={editingTodo ? "edit" : "create"}
+          todo={editingTodo}
+          categories={categories}
+          tags={tags}
+          onClose={closeModal}
+        />
+      )}
 
       <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
         <div className="rounded-[32px] border border-[var(--border)] bg-[var(--surface)] p-5 soft-shadow">
