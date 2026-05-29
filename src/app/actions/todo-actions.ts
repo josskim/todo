@@ -2,7 +2,7 @@
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { nowKst } from "@/lib/time";
+import { nowKst, parseKstDateTimeLocal } from "@/lib/time";
 import { categoryFormSchema, tagFormSchema, todoFormSchema, todoStatusSchema } from "@/lib/validators";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
@@ -125,8 +125,8 @@ export async function createTodoAction(_prev: ActionState, formData: FormData): 
 
   const data = parsed.data;
   const categoryId = await ensureCategory(user.id, data.categoryId || null);
-  const dueDate = data.dueDate ? new Date(data.dueDate) : null;
-  const reminderAt = data.reminderAt ? new Date(data.reminderAt) : null;
+  const dueDate = parseKstDateTimeLocal(data.dueDate || null);
+  const reminderAt = parseKstDateTimeLocal(data.reminderAt || null);
   const tagIds = data.tagIds.length > 0 ? data.tagIds : await upsertTags(user.id, data.tagNames);
 
   const todo = await prisma.todoTodo.create({
@@ -201,8 +201,8 @@ export async function updateTodoAction(_prev: ActionState, formData: FormData): 
 
   const data = parsed.data;
   const categoryId = await ensureCategory(user.id, data.categoryId || null);
-  const dueDate = data.dueDate ? new Date(data.dueDate) : null;
-  const reminderAt = data.reminderAt ? new Date(data.reminderAt) : null;
+  const dueDate = parseKstDateTimeLocal(data.dueDate || null);
+  const reminderAt = parseKstDateTimeLocal(data.reminderAt || null);
   const tagIds = data.tagIds.length > 0 ? data.tagIds : await upsertTags(user.id, data.tagNames);
 
   await prisma.$transaction(async (tx) => {

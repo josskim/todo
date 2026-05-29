@@ -43,6 +43,19 @@ export function formatKstDateTime(date?: string | Date | null) {
   return `${parts.year}. ${parts.month}. ${parts.day}. ${pad2(parts.hour)}:${pad2(parts.minute)}`;
 }
 
+export function parseKstDateTimeLocal(value?: string | null) {
+  if (!value) return null;
+
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  if (!match) {
+    const fallback = new Date(value);
+    return Number.isNaN(fallback.getTime()) ? null : fallback;
+  }
+
+  const [, year, month, day, hour, minute] = match.map(Number);
+  return new Date(Date.UTC(year, month - 1, day, hour - 9, minute));
+}
+
 export function nowKst() {
   return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
 }
