@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, CheckCircle2, Plus, Tag, Trash2, PencilLine, BellRing } from "lucide-react";
+import { CheckCircle2, Plus, Tag, Trash2, PencilLine, BellRing } from "lucide-react";
 import { Badge, Button, Input, Modal, Select, Textarea } from "@/components/ui";
 import {
   createTodoAction,
@@ -127,14 +127,14 @@ function TodoFormModal({
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-semibold">제목</label>
-            <Input name="title" defaultValue={todo?.title || ""} placeholder="할 일 제목" />
+            <label className="text-sm font-semibold">할일</label>
+            <Input name="title" defaultValue={todo?.title || ""} placeholder="해야 할 일을 입력하세요" />
             {state.errors?.title && <p className="text-xs text-[var(--danger)]">{state.errors.title[0]}</p>}
           </div>
 
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-semibold">내용</label>
-            <Textarea name="content" defaultValue={todo?.content || ""} rows={4} placeholder="메모나 관련 내용을 적어주세요." />
+            <label className="text-sm font-semibold">비고</label>
+            <Textarea name="content" defaultValue={todo?.content || ""} rows={3} placeholder="필요할 때만 간단히 적어두세요." />
           </div>
 
           <div className="space-y-2">
@@ -167,11 +167,6 @@ function TodoFormModal({
                 </option>
               ))}
             </Select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold">마감일</label>
-            <Input name="dueDate" type="datetime-local" defaultValue={formatDatetimeLocal(todo?.dueDate)} />
           </div>
 
           <div className="space-y-2">
@@ -278,17 +273,6 @@ export function TodoDashboard({
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created_desc");
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setNow(Date.now());
-    }, 60_000);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, []);
 
   const filteredTodos = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -305,17 +289,11 @@ export function TodoDashboard({
           .includes(term);
       })
       .sort((a, b) => {
-        const dueA = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
-        const dueB = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
         switch (sortBy) {
           case "priority_asc":
             return a.priority - b.priority || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
           case "priority_desc":
             return b.priority - a.priority || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-          case "due_asc":
-            return dueA - dueB || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-          case "due_desc":
-            return dueB - dueA || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
           case "created_asc":
             return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           case "created_desc":
@@ -329,14 +307,9 @@ export function TodoDashboard({
     return {
       total: todos.length,
       done: todos.filter((todo) => todo.status === "done").length,
-      dueSoon: todos.filter((todo) => {
-        if (!todo.dueDate) return false;
-        const due = new Date(todo.dueDate).getTime();
-        return due <= now + 1000 * 60 * 60 * 24;
-      }).length,
       unread: notifications.filter((notification) => !notification.isRead).length,
     };
-  }, [todos, notifications, now]);
+  }, [todos, notifications]);
 
   const openCreate = () => {
     setEditingTodo(null);
@@ -416,13 +389,12 @@ export function TodoDashboard({
           <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <StatPill label="전체" value={stats.total} tone="neutral" />
             <StatPill label="완료" value={stats.done} tone="success" />
-            <StatPill label="마감임박" value={stats.dueSoon} tone="warning" />
             <StatPill label="미읽음" value={stats.unread} tone="accent" />
           </div>
 
           <div className="mt-6 grid gap-3 lg:grid-cols-4">
             <div className="lg:col-span-2">
-              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="제목, 내용, 태그 검색" />
+              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="할일, 비고, 태그 검색" />
             </div>
             <Select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
               <option value="all">상태 전체</option>
@@ -435,8 +407,6 @@ export function TodoDashboard({
             <Select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
               <option value="created_desc">최신순</option>
               <option value="created_asc">오래된순</option>
-              <option value="due_asc">마감일 가까운순</option>
-              <option value="due_desc">마감일 먼순</option>
               <option value="priority_desc">우선순위 높은순</option>
               <option value="priority_asc">우선순위 낮은순</option>
             </Select>
@@ -485,12 +455,6 @@ export function TodoDashboard({
                         ))}
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[var(--muted)]">
-                        {todo.dueDate && (
-                          <span className="inline-flex items-center gap-1">
-                            <CalendarDays className="h-3.5 w-3.5" />
-                            {formatKstDateTime(todo.dueDate)}
-                          </span>
-                        )}
                         {latestReminder && (
                           <span className="inline-flex items-center gap-1">
                             <BellRing className="h-3.5 w-3.5" />

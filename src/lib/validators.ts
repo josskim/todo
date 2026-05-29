@@ -27,7 +27,7 @@ export const todoStatusSchema = z.enum(["todo", "doing", "done", "archived", "de
 export const prioritySchema = z.coerce.number().int().min(1).max(3);
 
 export const todoFormSchema = z.object({
-  title: z.string().trim().min(1, "제목을 입력해 주세요.").max(200),
+  title: z.string().trim().min(1, "할일을 입력해 주세요.").max(200),
   content: z.string().trim().max(10000).optional().or(z.literal("")),
   status: todoStatusSchema.default("todo"),
   priority: prioritySchema.default(2),
