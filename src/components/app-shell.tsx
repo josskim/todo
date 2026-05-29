@@ -30,7 +30,7 @@ export function AppShell({
   return (
     <div className="min-h-screen text-[var(--foreground)]">
       <ReminderHeartbeat />
-      <div className="mx-auto flex min-h-screen w-full max-w-[1600px] gap-4 p-4 pb-24 md:p-6 lg:pb-6">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1600px] gap-4 p-4 pb-20 md:p-6 lg:pb-6">
         <aside className="hidden w-[280px] flex-col rounded-[32px] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.07)] lg:flex">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent-weak)] text-[var(--accent)]">
@@ -119,7 +119,7 @@ export function AppShell({
         </main>
       </div>
 
-      <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-3 gap-2 rounded-[24px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-2 shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-3 gap-2 border-x-0 border-t border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_96%,transparent)] px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_42px_rgba(0,0,0,0.22)] backdrop-blur lg:hidden">
         {navItems.map((item) => {
           const active = pathname?.startsWith(item.href);
           const pending = pendingHref === item.href && !active;
