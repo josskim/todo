@@ -109,7 +109,9 @@ function TodoFormModal({
   const [state, formAction, pending] = useActionState(action, emptyState());
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(() => todo?.tags.map((item) => item.tag.id) || []);
   const [titleValue, setTitleValue] = useState(todo?.title || "");
+  const [selectedCategoryId, setSelectedCategoryId] = useState(todo?.category?.id || "");
   const reminderValue = todo?.reminders.find((reminder) => reminder.isActive && !reminder.dismissedAt)?.remindAt ?? "";
+  const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
 
   useEffect(() => {
     if (state.success) {
@@ -155,14 +157,26 @@ function TodoFormModal({
           <input type="hidden" name="content" value={todo?.content || ""} />
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold">상태</label>
-            <Select name="status" defaultValue={todo?.status || "todo"}>
-              {Object.entries(todoStatusLabels).map(([key, label]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </Select>
+            <label className="text-sm font-semibold">카테고리</label>
+            <div className="relative">
+              <span
+                className="pointer-events-none absolute left-4 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 rounded-full border border-black/10 shadow-sm"
+                style={{ backgroundColor: selectedCategory?.color || "transparent" }}
+              />
+              <Select
+                name="categoryId"
+                value={selectedCategoryId}
+                onChange={(event) => setSelectedCategoryId(event.target.value)}
+                className="pl-10"
+              >
+                <option value="">선택 안 함</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id} style={{ color: category.color || undefined }}>
+                    ● {category.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -175,12 +189,11 @@ function TodoFormModal({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold">카테고리</label>
-            <Select name="categoryId" defaultValue={todo?.category?.id || ""}>
-              <option value="">선택 안 함</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
+            <label className="text-sm font-semibold">상태</label>
+            <Select name="status" defaultValue={todo?.status || "todo"}>
+              {Object.entries(todoStatusLabels).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
                 </option>
               ))}
             </Select>
@@ -514,7 +527,7 @@ export function TodoDashboard({
                         ))}
                       </div>
                       <h3
-                        className={`mt-3 whitespace-pre-line text-lg font-black tracking-tight ${
+                        className={`mt-3 whitespace-pre-line text-base font-normal leading-relaxed ${
                           isDone ? "text-[var(--muted)] line-through decoration-[var(--success)] decoration-2 underline-offset-4" : ""
                         }`}
                       >
