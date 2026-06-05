@@ -19,6 +19,7 @@ import {
   todoPriorityTones,
   todoStatusLabels,
 } from "@/lib/todo";
+import { TODO_TITLE_MAX_LENGTH } from "@/lib/todo-limits";
 
 type Category = {
   id: string;
@@ -107,6 +108,7 @@ function TodoFormModal({
   const action = mode === "create" ? createTodoAction : updateTodoAction;
   const [state, formAction, pending] = useActionState(action, emptyState());
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(() => todo?.tags.map((item) => item.tag.id) || []);
+  const [titleValue, setTitleValue] = useState(todo?.title || "");
   const reminderValue = todo?.reminders.find((reminder) => reminder.isActive && !reminder.dismissedAt)?.remindAt ?? "";
 
   useEffect(() => {
@@ -120,7 +122,16 @@ function TodoFormModal({
 
   return (
     <Modal open={open} title={mode === "create" ? "할 일 추가" : "할 일 수정"} onClose={onClose}>
-      <form action={formAction} className="space-y-4">
+      <form
+        action={formAction}
+        className="space-y-4"
+        onSubmit={(event) => {
+          if (titleValue.trim().length > TODO_TITLE_MAX_LENGTH) {
+            event.preventDefault();
+            alert(`할일은 ${TODO_TITLE_MAX_LENGTH}자 이하로 입력해 주세요. 현재 ${titleValue.trim().length}자입니다.`);
+          }
+        }}
+      >
         {mode === "edit" && <input type="hidden" name="todoId" value={todo?.id || ""} />}
         <input type="hidden" name="tagIds" value={JSON.stringify(selectedTagIds)} />
         <input type="hidden" name="dueDate" value="" />
@@ -128,7 +139,16 @@ function TodoFormModal({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
             <label className="text-sm font-semibold">할일</label>
-            <Textarea name="title" defaultValue={todo?.title || ""} rows={3} placeholder="해야 할 일을 입력하세요" />
+            <Textarea
+              name="title"
+              value={titleValue}
+              onChange={(event) => setTitleValue(event.target.value)}
+              rows={5}
+              placeholder="해야 할 일을 입력하세요"
+            />
+            <div className={`text-right text-xs ${titleValue.trim().length > TODO_TITLE_MAX_LENGTH ? "text-[var(--danger)]" : "text-[var(--muted)]"}`}>
+              {titleValue.trim().length}/{TODO_TITLE_MAX_LENGTH}
+            </div>
             {state.errors?.title && <p className="text-xs text-[var(--danger)]">{state.errors.title[0]}</p>}
           </div>
 

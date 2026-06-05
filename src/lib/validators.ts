@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { TODO_TITLE_MAX_LENGTH } from "@/lib/todo-limits";
 
 export const phoneSchema = z
   .string()
@@ -29,7 +30,7 @@ export const prioritySchema = z.coerce.number().int().min(1).max(3);
 const optionalFormString = z.preprocess((value) => (value === null ? "" : value), z.string().trim().optional().or(z.literal("")));
 
 export const todoFormSchema = z.object({
-  title: z.string().trim().min(1, "할일을 입력해 주세요.").max(200),
+  title: z.string().trim().min(1, "할일을 입력해 주세요.").max(TODO_TITLE_MAX_LENGTH, `할일은 ${TODO_TITLE_MAX_LENGTH}자 이하로 입력해 주세요.`),
   content: optionalFormString.pipe(z.string().max(10000)),
   status: todoStatusSchema.default("todo"),
   priority: prioritySchema.default(2),
