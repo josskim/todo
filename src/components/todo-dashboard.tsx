@@ -164,15 +164,24 @@ function TodoFormModal({
     }
 
     const selectedText = titleValue.slice(start, end);
-    const replacement = selectedText.startsWith("~~") && selectedText.endsWith("~~")
+    const selectedIsWrapped = selectedText.startsWith("~~") && selectedText.endsWith("~~");
+    const surroundingIsWrapped = titleValue.slice(start - 2, start) === "~~" && titleValue.slice(end, end + 2) === "~~";
+    const replacement = selectedIsWrapped
       ? selectedText.slice(2, -2)
-      : `~~${selectedText}~~`;
-    const nextValue = `${titleValue.slice(0, start)}${replacement}${titleValue.slice(end)}`;
+      : surroundingIsWrapped
+        ? selectedText
+        : `~~${selectedText}~~`;
+    const nextValue = selectedIsWrapped
+      ? `${titleValue.slice(0, start)}${replacement}${titleValue.slice(end)}`
+      : surroundingIsWrapped
+        ? `${titleValue.slice(0, start - 2)}${replacement}${titleValue.slice(end + 2)}`
+        : `${titleValue.slice(0, start)}${replacement}${titleValue.slice(end)}`;
+    const nextStart = surroundingIsWrapped && !selectedIsWrapped ? start - 2 : start;
 
     setTitleValue(nextValue);
     window.requestAnimationFrame(() => {
       textarea.focus();
-      textarea.setSelectionRange(start, start + replacement.length);
+      textarea.setSelectionRange(nextStart, nextStart + replacement.length);
     });
   };
 
@@ -204,18 +213,31 @@ function TodoFormModal({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
             <label className="text-sm font-semibold">할일</label>
-            <Textarea
-              ref={titleTextareaRef}
-              name="title"
-              value={titleValue}
-              onChange={(event) => setTitleValue(event.target.value)}
-              rows={5}
-              placeholder="해야 할 일을 입력하세요"
-            />
+            <div className="relative rounded-2xl">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 whitespace-pre-wrap break-words rounded-2xl border border-transparent px-4 py-3 text-sm text-[var(--foreground)]"
+              >
+                {titleValue ? (
+                  <ProcessedText text={titleValue} />
+                ) : (
+                  <span className="text-[var(--muted)]">해야 할 일을 입력하세요</span>
+                )}
+              </div>
+              <Textarea
+                ref={titleTextareaRef}
+                name="title"
+                value={titleValue}
+                onChange={(event) => setTitleValue(event.target.value)}
+                rows={5}
+                placeholder="해야 할 일을 입력하세요"
+                className="relative bg-transparent text-transparent caret-[var(--foreground)] selection:bg-[var(--accent-weak)]"
+              />
+            </div>
             <div className="flex justify-end">
               <Button type="button" variant="secondary" className="h-9 rounded-full px-3 text-xs" onClick={markSelectedTitleText}>
                 <Strikethrough className="h-3.5 w-3.5" />
-                처리 표시
+                처리 표시/해제
               </Button>
             </div>
             <div className={`text-right text-xs ${titleValue.trim().length > TODO_TITLE_MAX_LENGTH ? "text-[var(--danger)]" : "text-[var(--muted)]"}`}>
