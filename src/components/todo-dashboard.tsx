@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState, useActionState } from "react";
+import { useEffect, useMemo, useRef, useState, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Plus, Tag, Trash2, PencilLine, BellRing, Search, SlidersHorizontal } from "lucide-react";
+import { CheckCircle2, Plus, Tag, Trash2, PencilLine, BellRing, Search, SlidersHorizontal, Strikethrough } from "lucide-react";
 import { Badge, Button, Input, Modal, Select, Textarea } from "@/components/ui";
 import {
   createTodoAction,
@@ -89,6 +89,43 @@ function emptyState() {
   return { success: false, message: "", errors: undefined as Record<string, string[]> | undefined };
 }
 
+function parseProcessedText(text: string) {
+  const parts: { text: string; processed: boolean }[] = [];
+  const pattern = /~~([\s\S]+?)~~/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ text: text.slice(lastIndex, match.index), processed: false });
+    }
+    parts.push({ text: match[1], processed: true });
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({ text: text.slice(lastIndex), processed: false });
+  }
+
+  return parts.length ? parts : [{ text, processed: false }];
+}
+
+function ProcessedText({ text }: { text: string }) {
+  return (
+    <>
+      {parseProcessedText(text).map((part, index) =>
+        part.processed ? (
+          <span key={index} className="text-[var(--muted)] line-through decoration-[var(--success)] decoration-2">
+            {part.text}
+          </span>
+        ) : (
+          <span key={index}>{part.text}</span>
+        ),
+      )}
+    </>
+  );
+}
+
 function TodoFormModal({
   open,
   mode,
@@ -110,8 +147,34 @@ function TodoFormModal({
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(() => todo?.tags.map((item) => item.tag.id) || []);
   const [titleValue, setTitleValue] = useState(todo?.title || "");
   const [selectedCategoryId, setSelectedCategoryId] = useState(todo?.category?.id || "");
+  const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const reminderValue = todo?.reminders.find((reminder) => reminder.isActive && !reminder.dismissedAt)?.remindAt ?? "";
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
+
+  const markSelectedTitleText = () => {
+    const textarea = titleTextareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    if (start === end) {
+      alert("처리한 내용을 드래그로 선택한 뒤 눌러주세요.");
+      textarea.focus();
+      return;
+    }
+
+    const selectedText = titleValue.slice(start, end);
+    const replacement = selectedText.startsWith("~~") && selectedText.endsWith("~~")
+      ? selectedText.slice(2, -2)
+      : `~~${selectedText}~~`;
+    const nextValue = `${titleValue.slice(0, start)}${replacement}${titleValue.slice(end)}`;
+
+    setTitleValue(nextValue);
+    window.requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start, start + replacement.length);
+    });
+  };
 
   useEffect(() => {
     if (state.success) {
@@ -142,12 +205,19 @@ function TodoFormModal({
           <div className="space-y-2 md:col-span-2">
             <label className="text-sm font-semibold">할일</label>
             <Textarea
+              ref={titleTextareaRef}
               name="title"
               value={titleValue}
               onChange={(event) => setTitleValue(event.target.value)}
               rows={5}
               placeholder="해야 할 일을 입력하세요"
             />
+            <div className="flex justify-end">
+              <Button type="button" variant="secondary" className="h-9 rounded-full px-3 text-xs" onClick={markSelectedTitleText}>
+                <Strikethrough className="h-3.5 w-3.5" />
+                처리 표시
+              </Button>
+            </div>
             <div className={`text-right text-xs ${titleValue.trim().length > TODO_TITLE_MAX_LENGTH ? "text-[var(--danger)]" : "text-[var(--muted)]"}`}>
               {titleValue.trim().length}/{TODO_TITLE_MAX_LENGTH}
             </div>
@@ -531,11 +601,11 @@ export function TodoDashboard({
                           isDone ? "text-[var(--muted)] line-through decoration-[var(--success)] decoration-2 underline-offset-4" : ""
                         }`}
                       >
-                        {todo.title}
+                        <ProcessedText text={todo.title} />
                       </h3>
                       {todo.content && (
                         <p className={`mt-2 line-clamp-2 text-sm text-[var(--muted)] ${isDone ? "line-through decoration-[var(--success)]" : ""}`}>
-                          {todo.content}
+                          <ProcessedText text={todo.content} />
                         </p>
                       )}
                       <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[var(--muted)]">

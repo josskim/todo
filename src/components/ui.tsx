@@ -65,17 +65,18 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   );
 }
 
-export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(function Textarea(props, ref) {
   return (
     <textarea
       {...props}
+      ref={ref}
       className={cn(
         "w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)]",
         props.className,
       )}
     />
   );
-}
+});
 
 export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
