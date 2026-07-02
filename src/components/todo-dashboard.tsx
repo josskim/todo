@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Plus, Tag, Trash2, PencilLine, BellRing, Search, SlidersHorizontal, Strikethrough, Pin, PinOff } from "lucide-react";
+import { CheckCircle2, Plus, Tag, Trash2, PencilLine, BellRing, Search, SlidersHorizontal, Strikethrough, PinOff } from "lucide-react";
 import { Badge, Button, Input, Modal, Select, Textarea } from "@/components/ui";
 import {
   createTodoAction,
@@ -616,12 +616,6 @@ export function TodoDashboard({
                   }`}
                 >
                   <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-white/70 dark:bg-white/10" />
-                  {todo.isPinned && (
-                    <div className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-[var(--accent)] px-2.5 py-1 text-[11px] font-black text-white shadow-sm">
-                      <Pin className="h-3 w-3 fill-current" />
-                      고정
-                    </div>
-                  )}
                   <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
