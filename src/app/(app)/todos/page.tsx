@@ -7,7 +7,7 @@ export default async function TodosPage() {
   const [todos, categories, tags, notifications, reminders] = await Promise.all([
     prisma.todoTodo.findMany({
       where: { userId: user.id, deletedAt: null },
-      orderBy: [{ createdAt: "desc" }],
+      orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
       include: {
         category: true,
         tags: { include: { tag: true } },

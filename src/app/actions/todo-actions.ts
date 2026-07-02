@@ -291,6 +291,33 @@ export async function toggleTodoStatusAction(formData: FormData): Promise<Action
   return { success: true, message: "상태가 변경되었습니다." };
 }
 
+export async function toggleTodoPinAction(formData: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  const todoId = BigInt(String(formData.get("todoId") || "0"));
+
+  const existing = await prisma.todoTodo.findFirst({
+    where: { id: todoId, userId: user.id, deletedAt: null },
+  });
+  if (!existing) return { success: false, message: "할 일을 찾을 수 없습니다." };
+
+  const isPinned = !existing.isPinned;
+  await prisma.todoTodo.update({
+    where: { id: todoId },
+    data: { isPinned },
+  });
+
+  await writeHistory({
+    todoId,
+    userId: user.id,
+    action: "pin",
+    beforeValue: { isPinned: existing.isPinned },
+    afterValue: { isPinned },
+  });
+
+  revalidatePath("/todos");
+  return { success: true, message: isPinned ? "상단에 고정했습니다." : "상단 고정을 해제했습니다." };
+}
+
 export async function deleteTodoAction(formData: FormData): Promise<ActionState> {
   const user = await requireUser();
   const todoId = BigInt(String(formData.get("todoId") || "0"));

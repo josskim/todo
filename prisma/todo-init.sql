@@ -37,12 +37,15 @@ CREATE TABLE IF NOT EXISTS "todo_todos" (
   "content" text,
   "status" varchar(20) NOT NULL DEFAULT 'todo',
   "priority" integer NOT NULL DEFAULT 2,
+  "isPinned" boolean NOT NULL DEFAULT false,
   "dueDate" timestamptz,
   "completedAt" timestamptz,
   "createdAt" timestamptz NOT NULL DEFAULT now(),
   "updatedAt" timestamptz NOT NULL DEFAULT now(),
   "deletedAt" timestamptz
 );
+
+ALTER TABLE "todo_todos" ADD COLUMN IF NOT EXISTS "isPinned" boolean NOT NULL DEFAULT false;
 
 CREATE TABLE IF NOT EXISTS "todo_todo_tags" (
   "id" text PRIMARY KEY,
@@ -105,6 +108,7 @@ CREATE INDEX IF NOT EXISTS "todo_todos_userId_idx" ON "todo_todos" ("userId");
 CREATE INDEX IF NOT EXISTS "todo_todos_categoryId_idx" ON "todo_todos" ("categoryId");
 CREATE INDEX IF NOT EXISTS "todo_todos_status_idx" ON "todo_todos" ("status");
 CREATE INDEX IF NOT EXISTS "todo_todos_priority_idx" ON "todo_todos" ("priority");
+CREATE INDEX IF NOT EXISTS "todo_todos_isPinned_idx" ON "todo_todos" ("isPinned");
 CREATE INDEX IF NOT EXISTS "todo_todos_dueDate_idx" ON "todo_todos" ("dueDate");
 CREATE INDEX IF NOT EXISTS "todo_todos_createdAt_idx" ON "todo_todos" ("createdAt");
 CREATE INDEX IF NOT EXISTS "todo_todos_deletedAt_idx" ON "todo_todos" ("deletedAt");

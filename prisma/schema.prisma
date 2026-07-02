@@ -50,6 +50,7 @@ model TodoTodo {
   content      String?           @db.Text
   status       String            @default("todo") @db.VarChar(20)
   priority     Int               @default(2)
+  isPinned     Boolean           @default(false)
   dueDate      DateTime?
   completedAt  DateTime?
   createdAt    DateTime          @default(now())
@@ -66,6 +67,7 @@ model TodoTodo {
   @@index([categoryId])
   @@index([status])
   @@index([priority])
+  @@index([isPinned])
   @@index([dueDate])
   @@index([createdAt])
   @@index([deletedAt])
