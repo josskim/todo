@@ -663,8 +663,8 @@ export function TodoDashboard({
                         className="h-8 rounded-full px-2.5 text-xs"
                         onClick={() => handleTogglePin(todo)}
                       >
-                        {todo.isPinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
-                        {todo.isPinned ? "고정 해제" : "핀 고정"}
+                        {todo.isPinned ? <PinOff className="h-3.5 w-3.5" /> : null}
+                        {todo.isPinned ? "고정 해제" : "고정"}
                       </Button>
                       <Button variant="secondary" className="h-8 rounded-full px-2.5 text-xs text-[var(--muted)]" onClick={() => openEdit(todo)}>
                         <PencilLine className="h-3.5 w-3.5" />
