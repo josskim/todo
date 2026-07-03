@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Button({
@@ -54,32 +55,49 @@ export function Button({
 }
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function Input(
-  { className, type, onClick, ...props },
+  { className, type, onClick, onMouseDown, ...props },
   ref,
 ) {
   const isNativeDateInput = type === "date" || type === "time" || type === "datetime-local";
+  const openNativePicker = (input: HTMLInputElement) => {
+    if (!isNativeDateInput) return;
+    if (typeof input.showPicker !== "function") return;
+    input.showPicker();
+  };
 
-  return (
+  const input = (
     <input
       {...props}
       ref={ref}
       type={type}
+      onMouseDown={(event) => {
+        onMouseDown?.(event);
+        if (!isNativeDateInput || event.button !== 0) return;
+
+        // Use mouse down so desktop browsers open the native picker even when users click the text portion.
+        openNativePicker(event.currentTarget);
+      }}
       onClick={(event) => {
         onClick?.(event);
-
-        const input = event.currentTarget;
-        if (!isNativeDateInput) return;
-        if (typeof input.showPicker !== "function") return;
-
-        // Desktop browsers often require an explicit picker trigger for native date/time controls.
-        input.showPicker();
       }}
       className={cn(
         "w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)]",
-        isNativeDateInput && "cursor-pointer",
+        isNativeDateInput && "cursor-pointer pr-11",
         className,
       )}
     />
+  );
+
+  if (!isNativeDateInput) return input;
+
+  return (
+    <div className="relative w-full">
+      {input}
+      <CalendarDays
+        aria-hidden="true"
+        className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--foreground)] opacity-90"
+      />
+    </div>
   );
 });
 
