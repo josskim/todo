@@ -53,17 +53,35 @@ export function Button({
   );
 }
 
-export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function Input(
+  { className, type, onClick, ...props },
+  ref,
+) {
+  const isNativeDateInput = type === "date" || type === "time" || type === "datetime-local";
+
   return (
     <input
       {...props}
+      ref={ref}
+      type={type}
+      onClick={(event) => {
+        onClick?.(event);
+
+        const input = event.currentTarget;
+        if (!isNativeDateInput) return;
+        if (typeof input.showPicker !== "function") return;
+
+        // Desktop browsers often require an explicit picker trigger for native date/time controls.
+        input.showPicker();
+      }}
       className={cn(
         "w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)]",
-        props.className,
+        isNativeDateInput && "cursor-pointer",
+        className,
       )}
     />
   );
-}
+});
 
 export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(function Textarea(props, ref) {
   return (
