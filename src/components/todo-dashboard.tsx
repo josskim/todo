@@ -150,6 +150,7 @@ function TodoFormModal({
   const [titleValue, setTitleValue] = useState(todo?.title || "");
   const [selectedCategoryId, setSelectedCategoryId] = useState(todo?.category?.id || "");
   const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const titlePreviewRef = useRef<HTMLDivElement | null>(null);
   const reminderValue = todo?.reminders.find((reminder) => reminder.isActive && !reminder.dismissedAt)?.remindAt ?? "";
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
 
@@ -215,10 +216,11 @@ function TodoFormModal({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
             <label className="text-sm font-semibold">할일</label>
-            <div className="relative rounded-2xl">
+            <div className="relative overflow-hidden rounded-2xl">
               <div
+                ref={titlePreviewRef}
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 whitespace-pre-wrap break-words rounded-2xl border border-transparent px-4 py-3 text-sm text-[var(--foreground)]"
+                className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words rounded-2xl border border-transparent px-4 py-3 text-sm leading-6 text-[var(--foreground)]"
               >
                 {titleValue ? (
                   <ProcessedText text={titleValue} />
@@ -233,7 +235,10 @@ function TodoFormModal({
                 onChange={(event) => setTitleValue(event.target.value)}
                 rows={5}
                 placeholder="해야 할 일을 입력하세요"
-                className="relative bg-transparent text-transparent caret-[var(--foreground)] selection:bg-[var(--accent-weak)]"
+                onScroll={(event) => {
+                  if (titlePreviewRef.current) titlePreviewRef.current.scrollTop = event.currentTarget.scrollTop;
+                }}
+                className="relative min-h-[9rem] resize-y overflow-auto bg-transparent text-transparent caret-[var(--foreground)] selection:bg-[var(--accent-weak)] leading-6"
               />
             </div>
             <div className="flex justify-end">
