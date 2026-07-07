@@ -128,6 +128,65 @@ function ProcessedText({ text }: { text: string }) {
   );
 }
 
+function getProcessedRanges(text: string) {
+  const ranges: { outerStart: number; outerEnd: number; innerStart: number; innerEnd: number }[] = [];
+  const pattern = /~~([\s\S]+?)~~/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    ranges.push({
+      outerStart: match.index,
+      outerEnd: match.index + match[0].length,
+      innerStart: match.index + 2,
+      innerEnd: match.index + match[0].length - 2,
+    });
+  }
+
+  return ranges;
+}
+
+function normalizeProcessedSelection(text: string, start: number, end: number) {
+  const ranges = getProcessedRanges(text);
+  const markerIndexes = new Set<number>();
+  const processedIndexes = new Set<number>();
+
+  for (const range of ranges) {
+    markerIndexes.add(range.outerStart);
+    markerIndexes.add(range.outerStart + 1);
+    markerIndexes.add(range.outerEnd - 2);
+    markerIndexes.add(range.outerEnd - 1);
+
+    for (let index = range.innerStart; index < range.innerEnd; index += 1) {
+      processedIndexes.add(index);
+    }
+  }
+
+  let hasText = false;
+  let hasPlainText = false;
+
+  for (let index = start; index < end; index += 1) {
+    if (markerIndexes.has(index)) continue;
+    hasText = true;
+    if (!processedIndexes.has(index)) {
+      hasPlainText = true;
+      break;
+    }
+  }
+
+  const overlappingRanges = ranges.filter((range) => range.innerStart < end && range.innerEnd > start);
+  const expandedStart = overlappingRanges.reduce((value, range) => Math.min(value, range.outerStart), start);
+  const expandedEnd = overlappingRanges.reduce((value, range) => Math.max(value, range.outerEnd), end);
+  const expandedText = text.slice(expandedStart, expandedEnd).replaceAll("~~", "");
+  const shouldMark = !hasText || hasPlainText;
+  const replacement = shouldMark ? `~~${expandedText}~~` : expandedText;
+
+  return {
+    nextValue: `${text.slice(0, expandedStart)}${replacement}${text.slice(expandedEnd)}`,
+    nextStart: expandedStart,
+    nextEnd: expandedStart + replacement.length,
+  };
+}
+
 function TodoFormModal({
   open,
   mode,
@@ -154,37 +213,53 @@ function TodoFormModal({
   const reminderValue = todo?.reminders.find((reminder) => reminder.isActive && !reminder.dismissedAt)?.remindAt ?? "";
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
 
+  const syncTitlePreviewScroll = () => {
+    const textarea = titleTextareaRef.current;
+    const preview = titlePreviewRef.current;
+    if (!textarea || !preview) return;
+
+    preview.scrollTop = textarea.scrollTop;
+    preview.scrollLeft = textarea.scrollLeft;
+  };
+
+  const syncTitlePreviewScrollSoon = () => {
+    window.requestAnimationFrame(syncTitlePreviewScroll);
+  };
+
+  const keepTitleCaretVisible = (textarea: HTMLTextAreaElement, nextValue: string) => {
+    const caretIsAtEnd = textarea.selectionStart >= nextValue.length;
+
+    window.requestAnimationFrame(() => {
+      if (caretIsAtEnd) {
+        textarea.scrollTop = textarea.scrollHeight;
+      }
+      syncTitlePreviewScroll();
+    });
+  };
+
   const markSelectedTitleText = () => {
     const textarea = titleTextareaRef.current;
     if (!textarea) return;
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
+    const scrollTop = textarea.scrollTop;
+    const scrollLeft = textarea.scrollLeft;
     if (start === end) {
       alert("처리한 내용을 드래그로 선택한 뒤 눌러주세요.");
       textarea.focus();
       return;
     }
 
-    const selectedText = titleValue.slice(start, end);
-    const selectedIsWrapped = selectedText.startsWith("~~") && selectedText.endsWith("~~");
-    const surroundingIsWrapped = titleValue.slice(start - 2, start) === "~~" && titleValue.slice(end, end + 2) === "~~";
-    const replacement = selectedIsWrapped
-      ? selectedText.slice(2, -2)
-      : surroundingIsWrapped
-        ? selectedText
-        : `~~${selectedText}~~`;
-    const nextValue = selectedIsWrapped
-      ? `${titleValue.slice(0, start)}${replacement}${titleValue.slice(end)}`
-      : surroundingIsWrapped
-        ? `${titleValue.slice(0, start - 2)}${replacement}${titleValue.slice(end + 2)}`
-        : `${titleValue.slice(0, start)}${replacement}${titleValue.slice(end)}`;
-    const nextStart = surroundingIsWrapped && !selectedIsWrapped ? start - 2 : start;
+    const { nextValue, nextStart, nextEnd } = normalizeProcessedSelection(titleValue, start, end);
 
     setTitleValue(nextValue);
     window.requestAnimationFrame(() => {
       textarea.focus();
-      textarea.setSelectionRange(nextStart, nextStart + replacement.length);
+      textarea.setSelectionRange(nextStart, nextEnd);
+      textarea.scrollTop = scrollTop;
+      textarea.scrollLeft = scrollLeft;
+      syncTitlePreviewScroll();
     });
   };
 
@@ -194,6 +269,10 @@ function TodoFormModal({
       onClose();
     }
   }, [state.success, onClose, router]);
+
+  useEffect(() => {
+    syncTitlePreviewScrollSoon();
+  }, [titleValue]);
 
   if (!open) return null;
 
@@ -220,7 +299,7 @@ function TodoFormModal({
               <div
                 ref={titlePreviewRef}
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words rounded-2xl border border-transparent px-4 py-3 text-sm leading-6 text-[var(--foreground)]"
+                className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words rounded-2xl border border-transparent px-4 pb-8 pt-3 text-sm leading-6 text-[var(--foreground)] [overflow-wrap:anywhere]"
               >
                 {titleValue ? (
                   <ProcessedText text={titleValue} />
@@ -232,17 +311,28 @@ function TodoFormModal({
                 ref={titleTextareaRef}
                 name="title"
                 value={titleValue}
-                onChange={(event) => setTitleValue(event.target.value)}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  setTitleValue(nextValue);
+                  keepTitleCaretVisible(event.currentTarget, nextValue);
+                }}
                 rows={5}
                 placeholder="해야 할 일을 입력하세요"
-                onScroll={(event) => {
-                  if (titlePreviewRef.current) titlePreviewRef.current.scrollTop = event.currentTarget.scrollTop;
-                }}
-                className="relative min-h-[9rem] resize-y overflow-auto bg-transparent text-transparent caret-[var(--foreground)] selection:bg-[var(--accent-weak)] leading-6"
+                onClick={syncTitlePreviewScrollSoon}
+                onKeyUp={syncTitlePreviewScrollSoon}
+                onSelect={syncTitlePreviewScrollSoon}
+                onScroll={syncTitlePreviewScroll}
+                className="relative min-h-[9rem] resize-y overflow-auto bg-transparent text-transparent caret-[var(--foreground)] selection:bg-[var(--accent-weak)] px-4 pb-8 pt-3 leading-6 [overflow-wrap:anywhere]"
               />
             </div>
             <div className="flex justify-end">
-              <Button type="button" variant="secondary" className="h-9 rounded-full px-3 text-xs" onClick={markSelectedTitleText}>
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-9 rounded-full px-3 text-xs"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={markSelectedTitleText}
+              >
                 <Strikethrough className="h-3.5 w-3.5" />
                 처리 표시/해제
               </Button>
