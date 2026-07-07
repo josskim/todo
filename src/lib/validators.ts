@@ -37,6 +37,10 @@ export const todoFormSchema = z.object({
   categoryId: optionalFormString,
   dueDate: optionalFormString,
   reminderAt: optionalFormString,
+  reminderType: z.enum(["once", "daily", "weekly", "monthly"]).default("once"),
+  reminderTime: optionalFormString,
+  reminderWeekdays: z.array(z.string().trim()).default([]),
+  reminderMonthDays: optionalFormString,
   tagNames: z.array(z.string().trim().min(1)).default([]),
   tagIds: z.array(z.string().trim().min(1)).default([]),
 });

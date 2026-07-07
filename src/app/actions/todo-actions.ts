@@ -7,6 +7,11 @@ import { categoryFormSchema, tagFormSchema, todoFormSchema, todoStatusSchema } f
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { sweepDueReminders } from "@/lib/reminders";
+import {
+  getNextRepeatReminderAt,
+  normalizeReminderRepeatConfig,
+  type ReminderRepeatType,
+} from "@/lib/reminder-repeat";
 
 type ActionState = {
   success?: boolean;
@@ -105,6 +110,43 @@ function parseTagIdsInput(value: FormDataEntryValue | null) {
   return [];
 }
 
+function buildReminderData(data: {
+  reminderAt?: string;
+  reminderType: ReminderRepeatType;
+  reminderTime?: string;
+  reminderWeekdays: string[];
+  reminderMonthDays?: string;
+}) {
+  if (data.reminderType === "once") {
+    const remindAt = parseKstDateTimeLocal(data.reminderAt || null);
+    return { reminder: remindAt ? { remindAt, repeatType: "once" as const, repeatConfig: undefined } : null, error: "" };
+  }
+
+  const normalized = normalizeReminderRepeatConfig({
+    repeatType: data.reminderType,
+    time: data.reminderTime,
+    weekdays: data.reminderWeekdays,
+    monthDays: data.reminderMonthDays,
+  });
+  if (normalized.error || !normalized.config) {
+    return { reminder: null, error: normalized.error || "반복 알림 설정을 확인해 주세요." };
+  }
+
+  const remindAt = getNextRepeatReminderAt(data.reminderType, normalized.config);
+  if (!remindAt) {
+    return { reminder: null, error: "다음 알림 시간을 계산하지 못했습니다." };
+  }
+
+  return {
+    reminder: {
+      remindAt,
+      repeatType: data.reminderType,
+      repeatConfig: normalized.config as Prisma.InputJsonValue,
+    },
+    error: "",
+  };
+}
+
 export async function createTodoAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireUser();
   const parsed = todoFormSchema.safeParse({
@@ -115,6 +157,10 @@ export async function createTodoAction(_prev: ActionState, formData: FormData): 
     categoryId: formData.get("categoryId"),
     dueDate: formData.get("dueDate"),
     reminderAt: formData.get("reminderAt"),
+    reminderType: formData.get("reminderType"),
+    reminderTime: formData.get("reminderTime"),
+    reminderWeekdays: formData.getAll("reminderWeekdays"),
+    reminderMonthDays: formData.get("reminderMonthDays"),
     tagNames: parseTagNamesInput(formData.get("tagNames")),
     tagIds: parseTagIdsInput(formData.get("tagIds")),
   });
@@ -126,7 +172,10 @@ export async function createTodoAction(_prev: ActionState, formData: FormData): 
   const data = parsed.data;
   const categoryId = await ensureCategory(user.id, data.categoryId || null);
   const dueDate = parseKstDateTimeLocal(data.dueDate || null);
-  const reminderAt = parseKstDateTimeLocal(data.reminderAt || null);
+  const reminderResult = buildReminderData(data);
+  if (reminderResult.error) {
+    return { success: false, errors: { reminderAt: [reminderResult.error] } };
+  }
   const tagIds = data.tagIds.length > 0 ? data.tagIds : await upsertTags(user.id, data.tagNames);
 
   const todo = await prisma.todoTodo.create({
@@ -142,11 +191,13 @@ export async function createTodoAction(_prev: ActionState, formData: FormData): 
       tags: {
         create: tagIds.map((tagId) => ({ tagId })),
       },
-      reminders: reminderAt
+      reminders: reminderResult.reminder
         ? {
             create: {
               userId: user.id,
-              remindAt: reminderAt,
+              remindAt: reminderResult.reminder.remindAt,
+              repeatType: reminderResult.reminder.repeatType,
+              ...(reminderResult.reminder.repeatConfig ? { repeatConfig: reminderResult.reminder.repeatConfig } : {}),
             },
           }
         : undefined,
@@ -191,6 +242,10 @@ export async function updateTodoAction(_prev: ActionState, formData: FormData): 
     categoryId: formData.get("categoryId"),
     dueDate: formData.get("dueDate"),
     reminderAt: formData.get("reminderAt"),
+    reminderType: formData.get("reminderType"),
+    reminderTime: formData.get("reminderTime"),
+    reminderWeekdays: formData.getAll("reminderWeekdays"),
+    reminderMonthDays: formData.get("reminderMonthDays"),
     tagNames: parseTagNamesInput(formData.get("tagNames")),
     tagIds: parseTagIdsInput(formData.get("tagIds")),
   });
@@ -202,7 +257,10 @@ export async function updateTodoAction(_prev: ActionState, formData: FormData): 
   const data = parsed.data;
   const categoryId = await ensureCategory(user.id, data.categoryId || null);
   const dueDate = parseKstDateTimeLocal(data.dueDate || null);
-  const reminderAt = parseKstDateTimeLocal(data.reminderAt || null);
+  const reminderResult = buildReminderData(data);
+  if (reminderResult.error) {
+    return { success: false, errors: { reminderAt: [reminderResult.error] } };
+  }
   const tagIds = data.tagIds.length > 0 ? data.tagIds : await upsertTags(user.id, data.tagNames);
 
   await prisma.$transaction(async (tx) => {
@@ -227,12 +285,14 @@ export async function updateTodoAction(_prev: ActionState, formData: FormData): 
     }
 
     await tx.todoReminder.deleteMany({ where: { todoId } });
-    if (reminderAt) {
+    if (reminderResult.reminder) {
       await tx.todoReminder.create({
         data: {
           todoId,
           userId: user.id,
-          remindAt: reminderAt,
+          remindAt: reminderResult.reminder.remindAt,
+          repeatType: reminderResult.reminder.repeatType,
+          ...(reminderResult.reminder.repeatConfig ? { repeatConfig: reminderResult.reminder.repeatConfig } : {}),
         },
       });
     }

@@ -1,6 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { TodoDashboard } from "@/components/todo-dashboard";
+import type { ReminderRepeatConfig } from "@/lib/reminder-repeat";
+
+function toReminderRepeatConfig(value: unknown): ReminderRepeatConfig | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as ReminderRepeatConfig;
+}
 
 export default async function TodosPage() {
   const user = await requireUser();
@@ -44,6 +50,7 @@ export default async function TodosPage() {
           ...reminder,
           id: reminder.id.toString(),
           todoId: reminder.todoId.toString(),
+          repeatConfig: toReminderRepeatConfig(reminder.repeatConfig),
         })),
         tags: todo.tags.map((todoTag) => ({
           ...todoTag,
@@ -61,6 +68,7 @@ export default async function TodosPage() {
         ...reminder,
         id: reminder.id.toString(),
         todoId: reminder.todoId.toString(),
+        repeatConfig: toReminderRepeatConfig(reminder.repeatConfig),
       }))}
     />
   );

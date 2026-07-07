@@ -21,6 +21,7 @@ import {
   todoStatusLabels,
 } from "@/lib/todo";
 import { TODO_TITLE_MAX_LENGTH } from "@/lib/todo-limits";
+import { describeReminderRepeat, type ReminderRepeatConfig, type ReminderRepeatType } from "@/lib/reminder-repeat";
 
 type Category = {
   id: string;
@@ -45,6 +46,8 @@ type TodoReminder = {
   todoId: string;
   remindAt: Date | string;
   repeatIntervalMinutes: number;
+  repeatType: string;
+  repeatConfig: ReminderRepeatConfig | null;
   lastNotifiedAt: Date | string | null;
   dismissedAt: Date | string | null;
   isActive: boolean;
@@ -81,6 +84,8 @@ type ReminderItem = {
   todoId: string;
   remindAt: Date | string;
   repeatIntervalMinutes: number;
+  repeatType: string;
+  repeatConfig: ReminderRepeatConfig | null;
   lastNotifiedAt: Date | string | null;
   dismissedAt: Date | string | null;
   isActive: boolean;
@@ -187,6 +192,23 @@ function normalizeProcessedSelection(text: string, start: number, end: number) {
   };
 }
 
+function getActiveReminder(todo: TodoItem | null) {
+  return todo?.reminders.find((reminder) => reminder.isActive && !reminder.dismissedAt) || null;
+}
+
+function getReminderTimeValue(reminder: TodoReminder | null) {
+  if (reminder?.repeatConfig?.time) return reminder.repeatConfig.time;
+  return "";
+}
+
+function getReminderWeekdays(reminder: TodoReminder | null) {
+  return new Set((reminder?.repeatConfig?.weekdays || []).map(String));
+}
+
+function getReminderMonthDays(reminder: TodoReminder | null) {
+  return (reminder?.repeatConfig?.monthDays || []).join(", ");
+}
+
 function TodoFormModal({
   open,
   mode,
@@ -208,9 +230,12 @@ function TodoFormModal({
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(() => todo?.tags.map((item) => item.tag.id) || []);
   const [titleValue, setTitleValue] = useState(todo?.title || "");
   const [selectedCategoryId, setSelectedCategoryId] = useState(todo?.category?.id || "");
+  const activeReminder = getActiveReminder(todo);
+  const [reminderType, setReminderType] = useState<ReminderRepeatType>((activeReminder?.repeatType || "once") as ReminderRepeatType);
+  const [selectedWeekdays, setSelectedWeekdays] = useState<Set<string>>(() => getReminderWeekdays(activeReminder));
   const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const titlePreviewRef = useRef<HTMLDivElement | null>(null);
-  const reminderValue = todo?.reminders.find((reminder) => reminder.isActive && !reminder.dismissedAt)?.remindAt ?? "";
+  const reminderValue = activeReminder?.remindAt ?? "";
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
 
   const syncTitlePreviewScroll = () => {
@@ -260,6 +285,15 @@ function TodoFormModal({
       textarea.scrollTop = scrollTop;
       textarea.scrollLeft = scrollLeft;
       syncTitlePreviewScroll();
+    });
+  };
+
+  const toggleWeekday = (value: string) => {
+    setSelectedWeekdays((current) => {
+      const next = new Set(current);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
     });
   };
 
@@ -388,9 +422,79 @@ function TodoFormModal({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold">알림 시간</label>
-            <Input name="reminderAt" type="datetime-local" defaultValue={formatDatetimeLocal(reminderValue)} />
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-sm font-semibold">알림 설정</label>
+            <div className="grid gap-2 md:grid-cols-[160px_1fr]">
+              <Select
+                name="reminderType"
+                value={reminderType}
+                onChange={(event) => {
+                  setReminderType(event.target.value as ReminderRepeatType);
+                }}
+              >
+                <option value="once">한 번</option>
+                <option value="daily">매일</option>
+                <option value="weekly">매주</option>
+                <option value="monthly">매월</option>
+              </Select>
+
+              {reminderType === "once" && (
+                <Input name="reminderAt" type="datetime-local" defaultValue={formatDatetimeLocal(reminderValue)} />
+              )}
+
+              {reminderType === "daily" && (
+                <Input name="reminderTime" type="time" defaultValue={getReminderTimeValue(activeReminder)} />
+              )}
+
+              {reminderType === "weekly" && (
+                <div className="space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3">
+                  <Input name="reminderTime" type="time" defaultValue={getReminderTimeValue(activeReminder)} />
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      ["0", "일"],
+                      ["1", "월"],
+                      ["2", "화"],
+                      ["3", "수"],
+                      ["4", "목"],
+                      ["5", "금"],
+                      ["6", "토"],
+                    ].map(([value, label]) => (
+                      <label
+                        key={value}
+                        className={`inline-flex cursor-pointer items-center rounded-full border px-3 py-1.5 text-xs font-bold ${
+                          selectedWeekdays.has(value)
+                            ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                            : "border-[var(--border)] bg-[var(--surface-soft)] text-[var(--foreground)]"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          name="reminderWeekdays"
+                          value={value}
+                          checked={selectedWeekdays.has(value)}
+                          onChange={() => toggleWeekday(value)}
+                          className="sr-only"
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {reminderType === "monthly" && (
+                <div className="space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3">
+                  <Input name="reminderTime" type="time" defaultValue={getReminderTimeValue(activeReminder)} />
+                  <Input
+                    name="reminderMonthDays"
+                    defaultValue={getReminderMonthDays(activeReminder)}
+                    placeholder="매월 날짜 예: 2, 16"
+                  />
+                  <p className="text-xs text-[var(--muted)]">여러 날짜는 쉼표로 구분해 주세요. 예: 2, 16</p>
+                </div>
+              )}
+            </div>
+            {state.errors?.reminderAt && <p className="text-xs text-[var(--danger)]">{state.errors.reminderAt[0]}</p>}
           </div>
 
           <div className="space-y-2 md:col-span-2">
@@ -460,7 +564,7 @@ function ReminderCard({
         <div>
           <div className="text-sm font-bold">{reminder.todo.title}</div>
           <div className="mt-1 text-xs text-[var(--muted)]">
-            {formatKstDateTime(reminder.remindAt)}
+            {describeReminderRepeat(reminder.repeatType, reminder.repeatConfig)} · 다음 {formatKstDateTime(reminder.remindAt)}
           </div>
         </div>
         <Button variant="secondary" className="h-9 px-3" onClick={() => onDismiss(reminder.id)}>
@@ -739,8 +843,8 @@ export function TodoDashboard({
                         {latestReminder && (
                           <span className="inline-flex items-center gap-1">
                             <BellRing className="h-3.5 w-3.5" />
-                            {formatKstDateTime(latestReminder.remindAt)}
-                            알림
+                            {describeReminderRepeat(latestReminder.repeatType, latestReminder.repeatConfig)}
+                            <span className="text-[var(--muted)]">다음 {formatKstDateTime(latestReminder.remindAt)}</span>
                           </span>
                         )}
                       </div>

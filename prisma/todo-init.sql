@@ -71,12 +71,17 @@ CREATE TABLE IF NOT EXISTS "todo_reminders" (
   "userId" text NOT NULL REFERENCES "todo_users"("id") ON DELETE CASCADE,
   "remindAt" timestamptz NOT NULL,
   "repeatIntervalMinutes" integer NOT NULL DEFAULT 5,
+  "repeatType" varchar(20) NOT NULL DEFAULT 'once',
+  "repeatConfig" jsonb,
   "lastNotifiedAt" timestamptz,
   "dismissedAt" timestamptz,
   "isActive" boolean NOT NULL DEFAULT true,
   "createdAt" timestamptz NOT NULL DEFAULT now(),
   "updatedAt" timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE "todo_reminders" ADD COLUMN IF NOT EXISTS "repeatType" varchar(20) NOT NULL DEFAULT 'once';
+ALTER TABLE "todo_reminders" ADD COLUMN IF NOT EXISTS "repeatConfig" jsonb;
 
 CREATE TABLE IF NOT EXISTS "todo_notifications" (
   "id" text PRIMARY KEY,

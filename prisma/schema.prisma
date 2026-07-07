@@ -125,6 +125,8 @@ model TodoReminder {
   userId                String
   remindAt              DateTime
   repeatIntervalMinutes  Int      @default(5)
+  repeatType             String   @default("once") @db.VarChar(20)
+  repeatConfig           Json?
   lastNotifiedAt         DateTime?
   dismissedAt           DateTime?
   isActive              Boolean  @default(true)
