@@ -1,6 +1,6 @@
 # Todo
 
-개인용 할 일 관리 앱입니다. `staynamcheon`과 같은 Neon PostgreSQL DB를 공유하지만, `todo_` 접두사 테이블만 추가해서 사용합니다. 기존 서비스의 테이블은 건드리지 않습니다.
+개인용 할 일 관리 앱입니다. Supabase PostgreSQL의 `todo` 전용 스키마를 사용하며 다른 서비스의 스키마는 건드리지 않습니다.
 
 ## 주요 기능
 
@@ -40,7 +40,7 @@ TODO_CRON_SECRET=
 
 Railway 배포 시에는 Railway 프로젝트의 `Variables`에 같은 값을 등록합니다.
 
-- `DATABASE_URL`: 기존 Neon PostgreSQL 연결 문자열
+- `DATABASE_URL`: `calendar_todo_intra_archive` Supabase PostgreSQL 연결 문자열
 - `SESSION_SECRET`: 로그인 세션 암호화용 비밀값
 - `NEXT_PUBLIC_APP_URL`: Railway에서 발급된 실제 서비스 주소
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`: 브라우저 푸시 공개키
@@ -66,7 +66,7 @@ Railway 배포 시에는 Railway 프로젝트의 `Variables`에 같은 값을 �
 
 ## 주의사항
 
-- 기존 `staynamcheon` 테이블은 수정하지 않습니다.
+- Supabase의 `calendar`, `intranet_archive`, `public` 스키마는 수정하지 않습니다.
 - 푸시 알림은 브라우저 권한과 서비스워커가 필요합니다.
 - 날짜는 KST 기준으로 표시됩니다.
 - 브라우저 푸시 구독이 꼬였을 때는 설정 화면의 `구독 초기화` 버튼으로 다시 시작할 수 있습니다.

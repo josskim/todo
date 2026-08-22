@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["todo"]
 }
 
 model TodoUser {
@@ -24,6 +25,7 @@ model TodoUser {
   histories    TodoHistory[]
 
   @@map("todo_users")
+  @@schema("todo")
 }
 
 model TodoCategory {
@@ -40,6 +42,7 @@ model TodoCategory {
   @@unique([userId, name])
   @@index([userId])
   @@map("todo_categories")
+  @@schema("todo")
 }
 
 model TodoTodo {
@@ -72,6 +75,7 @@ model TodoTodo {
   @@index([createdAt])
   @@index([deletedAt])
   @@map("todo_todos")
+  @@schema("todo")
 }
 
 model TodoTag {
@@ -87,6 +91,7 @@ model TodoTag {
   @@unique([userId, name])
   @@index([userId])
   @@map("todo_tags")
+  @@schema("todo")
 }
 
 model TodoTodoTag {
@@ -101,6 +106,7 @@ model TodoTodoTag {
   @@index([todoId])
   @@index([tagId])
   @@map("todo_todo_tags")
+  @@schema("todo")
 }
 
 model TodoHistory {
@@ -117,6 +123,7 @@ model TodoHistory {
   @@index([todoId])
   @@index([userId])
   @@map("todo_history")
+  @@schema("todo")
 }
 
 model TodoReminder {
@@ -139,6 +146,7 @@ model TodoReminder {
   @@index([userId])
   @@index([remindAt])
   @@map("todo_reminders")
+  @@schema("todo")
 }
 
 model TodoNotification {
@@ -158,6 +166,7 @@ model TodoNotification {
   @@index([todoId])
   @@index([isRead])
   @@map("todo_notifications")
+  @@schema("todo")
 }
 
 model TodoPushSubscription {
@@ -174,4 +183,5 @@ model TodoPushSubscription {
 
   @@index([userId])
   @@map("todo_push_subscriptions")
+  @@schema("todo")
 }

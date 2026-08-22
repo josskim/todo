@@ -15,6 +15,7 @@ type QueryFunction = (...queryArgs: unknown[]) => Promise<unknown>;
 if (!globalForPrisma.pool) {
   const pool = new pg.Pool({
     connectionString,
+    options: "-c search_path=todo,public",
     max: 2,
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 10_000,
